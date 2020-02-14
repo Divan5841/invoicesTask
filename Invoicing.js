@@ -49,7 +49,6 @@ function invoicing(invoices) {
                 }
                 comedyBonus += Math.floor(performance.audience / 5);
                 counterComedy++;
-                // thisPrise += 300 * performance.audience; ???
                 break;
             default:
                 throw new Error(`неизвестный тип: ${performance.type}`);
@@ -58,8 +57,6 @@ function invoicing(invoices) {
         totalPrice += currentPrise;
         totalBonus += Math.max(performance.audience - 30, 0);
     }
-
-// Дополнительный бонус за каждые 10 комедий
     (counterComedy === 10) ? (totalBonus += comedyBonus) : null;
 
     result += `Итого с вас: ${numberFormat.format(totalPrice)}\nВы заработали ${totalBonus} бонусов\n`;
