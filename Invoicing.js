@@ -1,45 +1,69 @@
-fetch('./invoices.json').then(response => response.json())
-    .then(data => {
-        console.log(invoicing(data));
-    });
+const PERFORMANCE_TYPE = {
+  TRAGEDY: "tragedy",
+  COMEDY: "comedy"
+};
 
-function invoicing(invoices) {
-    let totalPrice = 0;
-    let totalBonus = 0;
-    let comedyBonus = 0;
-    let counterComedy = 0;
-    const numberFormat = new Intl.NumberFormat("ru-RU",
-        {
-            style: "currency", currency: "RUB",
-            minimumFractionDigits: 2
-        });
+const PERFORMANCE_PRICE = {
+  TRAGEDY: 40000,
+  COMEDY: 30000
+};
 
-    let result = `Счет для ${invoices.customer}\n`;
-    for (let performance of invoices.performance) {
-        let currentPrise = 0;
-        switch (performance.type) {
-            case "tragedy":
-                currentPrise = 40000;
-                if (performance.audience > 30) {
-                    currentPrise += 1000 * (performance.audience - 30);
-                }
-                break;
-            case "comedy":
-                currentPrise = 30000;
-                if (performance.audience > 20) {
-                    currentPrise += 10000 + 500 * (performance.audience - 20);
-                }
-                comedyBonus += Math.floor(performance.audience / 5);
-                counterComedy++;
-                break;
-            default:
-                throw new Error(`неизвестный тип: ${performance.type}`);
-        }
-        result += `${performance.playId}: ${numberFormat.format(currentPrise)} (${performance.audience} мест)\n`;
-        totalPrice += currentPrise;
-        totalBonus += Math.max(performance.audience - 30, 0);
+const getPrice = (type, audience) => {
+  if (type === PERFORMANCE_TYPE.TRAGEDY) {
+    if (audience > 30) {
+      return PERFORMANCE_PRICE.TRAGEDY + 1000 * (audience - 30);
     }
-    (counterComedy === 10) ? (totalBonus += comedyBonus) : null;
-    result += `Итого с вас: ${numberFormat.format(totalPrice)}\nВы заработали ${totalBonus} бонусов\n`;
-    return result;
-}
+    return PERFORMANCE_PRICE.TRAGEDY;
+  }
+  if (type === PERFORMANCE_TYPE.COMEDY) {
+    if (audience > 20) {
+      return PERFORMANCE_PRICE.COMEDY + 16000 + 800 * (audience - 20);
+    }
+    return PERFORMANCE_PRICE.COMEDY + audience * 300;
+  }
+  throw new Error(`Неизвестный тип: ${type}`);
+};
+
+const getInvoice = order => {
+  let totalPrice = 0;
+  let totalBonus = 0;
+  let comedyBonus = 0;
+  let counterComedy = 0;
+
+  const numberFormat = new Intl.NumberFormat("ru-RU", {
+    style: "currency",
+    currency: "RUB",
+    minimumFractionDigits: 2
+  });
+
+  let result = `Счет для ${order.customer}\n`;
+
+  order.performance.forEach(({ type, audience, playId }) => {
+    const currentPrice = getPrice(type, audience);
+
+    result = `${result}${playId}: ${numberFormat.format(
+      currentPrice
+    )} (${audience} мест)\n`;
+    totalPrice += currentPrice;
+    totalBonus += Math.max(audience - 30, 0);
+
+    if (type === PERFORMANCE_TYPE.COMEDY) {
+      comedyBonus += Math.floor(audience / 5);
+      counterComedy++;
+    }
+
+    if (counterComedy === 10) {
+      totalBonus += comedyBonus;
+      comedyBonus = 0;
+      counterComedy = 0;
+    }
+  });
+
+  return `${result}Итого с вас: ${numberFormat.format(
+    totalPrice
+  )}\nВы заработали ${totalBonus} бонусов\n`;
+};
+
+fetch("./order.json")
+  .then(response => response.json())
+  .then(data => console.log(getInvoice(data)));
