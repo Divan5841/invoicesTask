@@ -1,24 +1,7 @@
-//invoices.json
-invoices = {
-    "customer": "MDT",
-    "performance": [
-        {
-            "playId": "Гамлет",
-            "audience": 55,
-            "type": "tragedy"
-        },
-        {
-            "playId": "Ромео и Джульетта",
-            "audience": 35,
-            "type": "tragedy"
-        },
-        {
-            "playId": "Отелло",
-            "audience": 40,
-            "type": "comedy"
-        }
-    ],
-};
+fetch('./invoices.json').then(response => response.json())
+    .then(data => {
+        console.log(invoicing(data));
+    });
 
 function invoicing(invoices) {
     let totalPrice = 0;
@@ -34,7 +17,6 @@ function invoicing(invoices) {
     let result = `Счет для ${invoices.customer}\n`;
     for (let performance of invoices.performance) {
         let currentPrise = 0;
-
         switch (performance.type) {
             case "tragedy":
                 currentPrise = 40000;
@@ -58,10 +40,6 @@ function invoicing(invoices) {
         totalBonus += Math.max(performance.audience - 30, 0);
     }
     (counterComedy === 10) ? (totalBonus += comedyBonus) : null;
-
     result += `Итого с вас: ${numberFormat.format(totalPrice)}\nВы заработали ${totalBonus} бонусов\n`;
     return result;
 }
-
-console.log(invoicing(invoices));
-
